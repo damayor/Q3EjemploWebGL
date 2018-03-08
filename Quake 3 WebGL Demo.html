@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<!-- saved from url=(0032)http://media.tojicode.com/q3bsp/ -->
+<html><script>(function main() {
+    // Create enabled event
+    function fireEnabledEvent() {
+        // If gli exists, then we are already present and shouldn't do anything
+        if (!window.gli) {
+            setTimeout(function () {
+                var enabledEvent = document.createEvent("Event");
+                enabledEvent.initEvent("WebGLEnabledEvent", true, true);
+                document.dispatchEvent(enabledEvent);
+            }, 0);
+        } else {
+            //console.log("WebGL Inspector already embedded on the page - disabling extension");
+        }
+    };
+
+    // Grab the path root from the extension
+    document.addEventListener("WebGLInspectorReadyEvent", function (e) {
+        var pathElement = document.getElementById("__webglpathroot");
+        if (window["gliloader"]) {
+            gliloader.pathRoot = pathElement.innerText;
+        } else {
+            // TODO: more?
+            window.gliCssUrl = pathElement.innerText + "gli.all.css";
+        }
+    }, false);
+
+    // Rewrite getContext to snoop for webgl
+    var originalGetContext = HTMLCanvasElement.prototype.getContext;
+    if (!HTMLCanvasElement.prototype.getContextRaw) {
+        HTMLCanvasElement.prototype.getContextRaw = originalGetContext;
+    }
+    HTMLCanvasElement.prototype.getContext = function () {
+        var ignoreCanvas = this.internalInspectorSurface;
+        if (ignoreCanvas) {
+            return originalGetContext.apply(this, arguments);
+        }
+
+        var result = originalGetContext.apply(this, arguments);
+        if (result == null) {
+            return null;
+        }
+
+        var contextNames = ["moz-webgl", "webkit-3d", "experimental-webgl", "webgl", "3d"];
+        var requestingWebGL = contextNames.indexOf(arguments[0]) != -1;
+        if (requestingWebGL) {
+            // Page is requesting a WebGL context!
+            fireEnabledEvent(this);
+
+            // If we are injected, inspect this context
+            if (window.gli) {
+                if (gli.host.inspectContext) {
+                    // TODO: pull options from extension
+                    result = gli.host.inspectContext(this, result);
+                    // NOTE: execute in a timeout so that if the dom is not yet
+                    // loaded this won't error out.
+                    window.setTimeout(function() {
+                        var hostUI = new gli.host.HostUI(result);
+                        result.hostUI = hostUI; // just so we can access it later for debugging
+                    }, 0);
+                }
+            }
+        }
+
+        return result;
+    };
+})();</script><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+        <title>Quake 3 WebGL Demo</title>
+        <!-- Origin Trial Token, feature = WebVR, origin = https://media.tojicode.com, expires = 2017-05-16 -->
+        <meta http-equiv="origin-trial" data-feature="WebVR" data-expires="2017-05-16" content="An9DDRxSH95eYUHJ6qRRuBIhUhVHO6bm82JiDAYd0kimmQnTRBBBfGNxAW9gsZHHoT3Bb2lLGJ+JbrWJM86XZQEAAABReyJvcmlnaW4iOiJodHRwczovL21lZGlhLnRvamljb2RlLmNvbTo0NDMiLCJmZWF0dXJlIjoiV2ViVlIiLCJleHBpcnkiOjE0OTQ5OTE3MDF9">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+        <!-- Common Utilities -->
+        <script type="text/javascript" src="./Quake 3 WebGL Demo_files/game-shim.js.descarga"></script>
+        <script type="text/javascript" src="./Quake 3 WebGL Demo_files/gl-matrix-min.2.3.2.js.descarga"></script>
+        <script type="text/javascript" src="./Quake 3 WebGL Demo_files/stats.min.js.descarga"></script>
+
+        <script>
+        window.WebVRConfig = {
+            MOUSE_KEYBOARD_CONTROLS_DISABLED: true
+        };
+        </script>
+        <script type="text/javascript" src="./Quake 3 WebGL Demo_files/webvr-polyfill.js.descarga"></script>
+
+        <!-- Quake3 Map Specific files -->
+        <script type="text/javascript" src="./Quake 3 WebGL Demo_files/main.js.descarga"></script>
+        <script type="text/javascript" src="./Quake 3 WebGL Demo_files/q3bsp.js.descarga"></script>
+        <script type="text/javascript" src="./Quake 3 WebGL Demo_files/q3shader.js.descarga"></script>
+        <script type="text/javascript" src="./Quake 3 WebGL Demo_files/q3glshader.js.descarga"></script>
+        <script type="text/javascript" src="./Quake 3 WebGL Demo_files/q3movement.js.descarga"></script>
+
+        <!-- Stylesheet -->
+        <link href="./Quake 3 WebGL Demo_files/q3demo.css" rel="stylesheet" type="text/css">
+    </head>
+    <body>
+        <h2 id="mapTitle"></h2>
+
+        <div id="viewport-frame">
+            <canvas id="viewport" width="854" height="480" style="display: block;">
+                Sorry, but your browser does not support WebGL or does not have it enabled.
+                To get a WebGL-enabled browser, please see:<br>
+                <a href="http://get.webgl.org/" target="_blank">
+                    http://get.webgl.org/
+                </a>
+            </canvas>
+            <div id="loading" style="display: none;">Geometry compiled, parsing collision tree...</div>
+        <div id="stats" style="width: 80px; opacity: 0.9; cursor: pointer;"><div id="fps" style="padding: 0px 0px 3px 3px; text-align: left; background-color: rgb(0, 0, 34);"><div id="fpsText" style="color: rgb(0, 255, 255); font-family: Helvetica, Arial, sans-serif; font-size: 9px; font-weight: bold; line-height: 15px;">60 FPS (0-60)</div><div id="fpsGraph" style="position: relative; width: 74px; height: 30px; background-color: rgb(0, 255, 255);"><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12.3px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12.3px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12.3px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12.3px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12.3px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span><span style="width: 1px; height: 12px; float: left; background-color: rgb(17, 17, 51);"></span></div></div><div id="ms" style="padding: 0px 0px 3px 3px; text-align: left; background-color: rgb(0, 34, 0); display: none;"><div id="msText" style="color: rgb(0, 255, 0); font-family: Helvetica, Arial, sans-serif; font-size: 9px; font-weight: bold; line-height: 15px;">0 MS (0-1576)</div><div id="msGraph" style="position: relative; width: 74px; height: 30px; background-color: rgb(0, 255, 0);"><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 29.85px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span><span style="width: 1px; height: 30px; float: left; background-color: rgb(17, 51, 17);"></span></div></div></div></div>
+
+        <div id="webgl-error" style="display: none; text-align: center; vertical-align: middle;">
+            Sorry, but your browser does not support WebGL or does not have it enabled.<br>
+            To get a WebGL-enabled browser, please see:<br>
+            <a href="http://get.webgl.org/" target="_blank">
+                http://get.webgl.org/
+            </a>
+        </div>
+
+        <img style="display: none;" src="./Quake 3 WebGL Demo_files/vr_goggles_sm.png" id="mobileVrBtn">
+        <img src="./Quake 3 WebGL Demo_files/fullscreen_sm.png" id="mobileFullscreenBtn">
+
+        <div id="viewport-info" style="display: block;">
+            <div id="controls">
+                <h3>Controls</h3>
+                <ul>
+                    <li><b>Look:</b> Click and Drag</li>
+                    <li><b>Movement:</b> W,A,S,D</li>
+                    <li><b>Jump:</b> Space</li>
+                    <li><b>Respawn:</b> R</li>
+                </ul>
+            </div>
+
+            <div id="config">
+                <h3>Settings</h3>
+                <ul>
+                    <li><b>Show FPS:</b> <input type="checkbox" id="showFPS" checked=""></li>
+                    <li style="display: none;" id="vrToggle"><b>VR:</b> <img src="./Quake 3 WebGL Demo_files/vr_goggles_sm.png" id="vrBtn"></li>
+                    <!--li><b>Background Music:</b> <input type="checkbox" id="playMusic" checked="true"/></li-->
+                    <li><b>Fullscreen:</b> <img src="./Quake 3 WebGL Demo_files/fullscreen_sm.png" id="fullscreenBtn"></li>
+                </ul>
+            </div>
+            <a href="http://blog.tojicode.com/">See more WebGL demo's at my blog</a>
+        </div>
+    
+
+</body></html>
