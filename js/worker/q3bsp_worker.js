@@ -158,7 +158,6 @@ q3bsp.parse = function(src, tesselationLevel) {
 
 /**
 CVI - Lee el header del BSP para identificar cuales de los lumps que estan guardados en el BPS y su tamaño
-
 **/
 // Read all lump headers
 q3bsp.readHeader = function(src) {

@@ -38,7 +38,7 @@ q3bsp_base_folder = 'demo_baseq3';
 
 /**
 
-CVI - Q3 BSP.js Importa todas
+CVI - Q3 BSP.js Importa todas las entidades leídas en el archivo BSP
 
 **/
 q3bsp = function(gl) {
@@ -53,6 +53,9 @@ q3bsp = function(gl) {
     this.showLoadStatus();
     
     // Spawn the web worker
+     /**
+    CVI - Utiliza el script externo BSP Worker para realizar el parse del archivo BSP
+    **/
     this.worker = new Worker('js/q3bsp_worker.js');
     this.worker.onmessage = function(msg) {
         map.onMessage(msg);
@@ -104,6 +107,7 @@ q3bsp.prototype.playMusic = function(play) {
         this.bgMusic.pause();
     }
 };
+
 
 q3bsp.prototype.onMessage = function(msg) {
     switch(msg.data.type) {
@@ -169,6 +173,11 @@ q3bsp.prototype.load = function(url, tesselationLevel) {
     });
 };
 
+/**
+
+CVI - Carga los shaders utilizando el script Q3Shader.js
+
+**/
 q3bsp.prototype.loadShaders = function(sources) {
     var map = this;
     
@@ -181,6 +190,7 @@ q3bsp.prototype.loadShaders = function(sources) {
     });
 };
 
+// CVI - Procesa las e de la escena como nombres, lugares, armas, luces, etc.
 q3bsp.prototype.processEntities = function(entities) {
     if(this.onentitiesloaded) {
         this.onentitiesloaded(entities);
@@ -216,6 +226,10 @@ function q3bspCreateSpeaker(speaker) {
     speaker.audio.play();
 };
 
+/**
+CVI - Inicia y crea los buffers del mapa y del cielo.
+        Es una textura que se encuentra en movmiento.
+**/
 q3bsp.prototype.buildBuffers = function(vertices, indices) {
     var gl = this.gl;
     
@@ -304,6 +318,12 @@ q3bsp.prototype.buildLightmaps = function(size, lightmaps) {
     q3glshader.init(gl, this.lightmap);
 };
 
+
+/**
+
+CVI - procesa los shaders ya en lenguaje GLSL utilizando el script Q3GL shader.js
+
+**/
 q3bsp.prototype.buildShaders = function(shaders) {
     var gl = this.gl;
     
@@ -364,6 +384,8 @@ q3bsp.prototype.bindShaders = function() {
         }
     }, 10);
 };
+
+
 
 // Update which portions of the map are visible based on position
 
@@ -456,7 +478,7 @@ q3bsp.prototype.setViewport = function(viewport) {
 
  /***
  CVI - Especifica los valores de las modelViewMatrix y ProjectionMatrix.
-        Dibuja cada escena con las respectivas primitivas
+        ¡Dibuja cada escena con las respectivas primitivas!
  ***/
 
 q3bsp.prototype.draw = function(leftViewMat, leftProjMat, leftViewport, rightViewMat, rightProjMat, rightViewport) {
@@ -477,6 +499,7 @@ q3bsp.prototype.draw = function(leftViewMat, leftProjMat, leftViewport, rightVie
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.skyboxIndexBuffer);
             gl.bindBuffer(gl.ARRAY_BUFFER, this.skyboxBuffer);
         
+            // CVI - El skybox lo dibuja con primitivas de triangulos
             // Render Skybox
             if(q3glshader.setShader(gl, this.skyShader)) {
                 for(var j = 0; j < this.skyShader.stages.length; ++j) {
@@ -504,8 +527,11 @@ q3bsp.prototype.draw = function(leftViewMat, leftProjMat, leftViewport, rightVie
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
         
+        //Pinta las texturas por defecto, mientras cargan las de cada plano o superficie
         // Default shader surfaces (can bind shader once and draw all of them very quickly)
         if(this.defaultSurfaces.length > 0 || this.unshadedSurfaces.length > 0) {
+            
+            // CVI - conecta los shaders leidos, así como sus texturas.
             // Setup State
             var shader = q3glshader.defaultShader;
             q3glshader.setShader(gl, shader);
@@ -522,6 +548,7 @@ q3bsp.prototype.draw = function(leftViewMat, leftProjMat, leftViewport, rightVie
                 gl.drawElements(gl.TRIANGLES, surface.elementCount, gl.UNSIGNED_SHORT, surface.indexOffset);
             }
             for(i = 0; i < this.defaultSurfaces.length; ++i) {
+                // CVI - las pinta con primitivas de triangulos
                 var surface = this.defaultSurfaces[i];
                 var stage = surface.shader.stages[0];
                 gl.bindTexture(gl.TEXTURE_2D, stage.texture);
@@ -548,6 +575,7 @@ q3bsp.prototype.draw = function(leftViewMat, leftProjMat, leftViewport, rightVie
             }
         }
 
+        // CVI - pinta las superficies a punta de primitivas de triangulos y las texturas que son.
         // Model shader surfaces (can bind shader once and draw all of them very quickly)
         if(this.modelSurfaces.length > 0) {
             // Setup State
@@ -578,6 +606,7 @@ q3bsp.prototype.draw = function(leftViewMat, leftProjMat, leftViewport, rightVie
             }
         }
     
+        // CVI - pinta los efectos sobre las superficies
         // Effect surfaces
         for(var i = 0; i < this.effectSurfaces.length; ++i) {
             var surface = this.effectSurfaces[i];
@@ -724,6 +753,7 @@ q3bsptree.prototype.traceNode = function(nodeIdx, startFraction, endFraction, st
     }
 };
 
+// Traza cada brush para determinar los colliders entre el jugador y el mapa.
 q3bsptree.prototype.traceBrush = function(brush, start, end, radius, output) {
     var startFraction = -1;
     var endFraction = 1;

@@ -25,6 +25,13 @@
  *    distribution.
  */
 
+ 
+ /**
+CVI - Inicia la aplicación, WebGL y el mapa BSP
+        Actualiza cada frame, la posición de la camara y por ende la matriz ModelView
+**/
+ 
+ 
 // The bits that need to change to load different maps are right here!
 // ===========================================
 
@@ -73,6 +80,10 @@ var vrDrawMode = 0;
 var SKIP_FRAMES = 0;
 var REPEAT_FRAMES = 1;
 
+ /**
+CVI - Tambien se puede jugar con dispositvos de realidad virual (VR). 
+        Esta funcion determina si fue detectado algún dispositivo
+**/
 function isVRPresenting() {
   return (vrDisplay && vrDisplay.isPresenting);
 }
@@ -108,6 +119,9 @@ function initGL(gl, canvas) {
     initMap(gl);
 }
 
+/**
+CVI - Carga el archivo BSP usando el script el script Q3BSP.js
+**/
 // Load the map
 function initMap(gl) {
     var titleEl = document.getElementById("mapTitle");
@@ -136,6 +150,10 @@ function initMapEntities(entities) {
     respawnPlayer(0);
 }
 
+/**
+CVI - Utiliza el script Q3Movement para iniciar la interacción con el usuario.
+      La clase encargada para todos los moviemientos es 'playerMover'.
+**/
 function initPlayerMover(bsp) {
     playerMover = new q3movement(bsp);
     respawnPlayer(0);
@@ -143,6 +161,10 @@ function initPlayerMover(bsp) {
     onResize();
 }
 
+
+/**
+CVI - Reinicia la posición del jugador haciéndolo reaparacer cuando se presiona 'R'.
+**/
 var lastIndex = 0;
 // "Respawns" the player at a specific spawn point. Passing -1 will move the player to the next spawn point.
 function respawnPlayer(index) {
@@ -159,6 +181,9 @@ function respawnPlayer(index) {
             spawnPoint.origin[2]+30 // Start a little ways above the floor
         ];
 
+        /**
+        CVI - Lo hace reaparecer en reposo.
+        **/
         playerMover.velocity = [0,0,0];
 
         zAngle = -(spawnPoint.angle || 0) * (3.1415/180) + (3.1415*0.5); // Negative angle in radians + 90 degrees
@@ -234,16 +259,25 @@ function onFrame(gl, event) {
       vrDisplay.submitFrame(vrPose);
 }
 
+/**
+CVI - Determina la matriz que maneja la vista.      
+**/
 var poseMatrix = mat4.create();
 function getViewMatrix(out, pose, eye) {
   mat4.identity(out);
 
+  // CVI - la tralada a la posicion del usuario
   mat4.translate(out, out, playerMover.position);
   //if (!vrDisplay || !vrDisplay.stageParameters)
+      
+    // CVI - En caso de tener VR, la ubica a la altura del usuaio
     mat4.translate(out, out, [0, 0, playerHeight]);
+    
+  // CVI - La rota a la orientación que esta viendo el usuario, con X a la derecha.
   mat4.rotateZ(out, out, -zAngle);
   mat4.rotateX(out, out, Math.PI/2);
 
+  // CVI - Orientar la vista, si el jugador esta mirando en una orientación determinada (causada por el clic en el canvas).
   if (pose) {
     var orientation = pose.orientation;
     var position = pose.position;
@@ -258,7 +292,8 @@ function getViewMatrix(out, pose, eye) {
     /*if (vrDisplay.stageParameters) {
       mat4.multiply(poseMatrix, vrDisplay.stageParameters.sittingToStandingTransform, out);
     }*/
-
+    
+    // CVI - En caso de tener dispositivo de realidad virtual, ubica la vista en el centro de la vista.
     if (eye) {
       mat4.translate(poseMatrix, poseMatrix, [eye.offset[0] * vrIPDScale, eye.offset[1] * vrIPDScale, eye.offset[2] * vrIPDScale]);
     }
@@ -268,9 +303,13 @@ function getViewMatrix(out, pose, eye) {
 
   mat4.rotateX(out, out, -xAngle);
 
+  // CVI - Invierte la matriz para determinar la verdadera matriz de la vista.
   mat4.invert(out, out);
 }
 
+/**
+CVI - Dibuja cada frame
+**/
 // Draw a single frame
 function drawFrame(gl) {
     // Clear back buffer but not color buffer (we expect the entire scene to be overwritten)
@@ -284,7 +323,10 @@ function drawFrame(gl) {
       getViewMatrix(leftViewMat, vrPose);
 
       // Here's where all the magic happens...
+      // CVI - ¡¡¡¡Dibuja el mapa decodificado del archivo BSP!!!!
       map.draw(leftViewMat, projMat);
+      
+      
     } else if (vrDrawMode == 1) {
       var canvas = document.getElementById("viewport");
       leftViewport.width = canvas.width / 2.0;
@@ -302,7 +344,9 @@ function drawFrame(gl) {
 
       map.draw(leftViewMat, vrFrameData.leftProjectionMatrix, leftViewport,
                rightViewMat, vrFrameData.rightProjectionMatrix, rightViewport);
-    } else {
+    } else 
+     // CVI - renderiza en caso de un casco de realidad virtual: un viewport para cada ojo
+    {
       var canvas = document.getElementById("viewport");
 
       var leftEye = vrDisplay.getEyeParameters("left");
@@ -346,6 +390,10 @@ function filterDeadzone(value) {
 }
 
 var vrEuler = vec3.create();
+
+ /**
+CVI - Lo mueve, en caso de que tenga una 'pose' de la cabeza ya definida
+**/
 function moveViewOriented(dir, frameTime) {
   if(dir[0] !== 0 || dir[1] !== 0 || dir[2] !== 0) {
       mat4.identity(cameraMat);
@@ -364,6 +412,9 @@ function moveViewOriented(dir, frameTime) {
   playerMover.move(dir, frameTime);
 }
 
+ /**
+CVI - Esta pendiente a cualquier input por el jugador
+**/
 function updateInput(frameTime) {
     if(!playerMover) { return; }
 
@@ -415,6 +466,9 @@ function updateInput(frameTime) {
     moveViewOriented(dir, frameTime);
 }
 
+ /**
+CVI - Inicia los eventos (event listener) que realizará el usuario 
+**/
 // Set up event handling
 function initEvents() {
     var movingModel = false;
@@ -454,6 +508,10 @@ function initEvents() {
         pressed[event.keyCode] = false;
     }, false);
 
+    
+     /**
+    CVI - Eventos que actualizan la pose de la vista en caso de dejar presionado el mouse.
+    **/
     function startLook(x, y) {
         movingModel = true;
 
@@ -602,6 +660,11 @@ function renderLoop(gl, stats) {
     window.requestAnimationFrame(onRequestedFrame);
 }
 
+
+ /**
+CVI - Main function: primeras instrucciones. 
+        Detecta el canvas, los dispositivos de VR y la ventana de FPS
+**/
 function main() {
     var stats = new Stats();
     document.getElementById("viewport-frame").appendChild( stats.domElement );
@@ -649,6 +712,9 @@ function main() {
     onResize();
     window.addEventListener("resize", onResize, false);
 
+     /**
+        CVI - Muestra los FPS con la libreria Stats.js
+    **/
     var showFPS = document.getElementById("showFPS");
     showFPS.addEventListener("change", function() {
         stats.domElement.style.display = showFPS.checked ? "block" : "none";

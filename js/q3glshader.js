@@ -27,7 +27,7 @@
  
  
 /**
-CVI - Convierte el Shader decodificado de Q3, lo pasa a un shader en GLSL y lo compila      
+CVI - Carga el shader ya en lenguaje GLSL a partir de lo detectado en el archivo BSP
 **/
  
  
@@ -222,7 +222,9 @@ q3glshader.translateBlend = function(gl, blend) {
 //
 // Texture loading
 //
-
+/**
+CVI - carga las texturas
+**/
 q3glshader.loadShaderMaps = function(gl, surface, shader) {
     for(var i = 0; i < shader.stages.length; ++i) {
         var stage = shader.stages[i];

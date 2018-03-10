@@ -59,6 +59,9 @@ q3movement = function(bsp) {
     this.groundTrace = null;
 };
 
+/**
+CVI -  Si esta en el piso, es necesario aplicarle fricción al jugador antes de que se mueva del reposo
+**/
 q3movement.prototype.applyFriction = function() {
     if(!this.onGround) { return; }
     
@@ -81,6 +84,9 @@ q3movement.prototype.applyFriction = function() {
     }
 };
 
+/**
+CVI - Verifica si esta en el piso o en el aire saltando
+**/
 q3movement.prototype.groundCheck = function() {
     var checkPoint = [this.position[0], this.position[1], this.position[2] - q3movement_playerRadius - 0.25];
     
@@ -117,6 +123,9 @@ q3movement.prototype.clipVelocity = function(velIn, normal) {
     return vec3.subtract(change, velIn, change);
 };
 
+/**
+CVI - Acelera; cambia la velocidad. Mas que todo para cambiar del reposo al movimiento constante
+**/
 q3movement.prototype.accelerate = function(dir, speed, accel) {
     var currentSpeed = vec3.dot(this.velocity, dir);
     var addSpeed = speed - currentSpeed;
@@ -133,6 +142,9 @@ q3movement.prototype.accelerate = function(dir, speed, accel) {
     vec3.add(this.velocity, this.velocity, accelDir);
 };
 
+/**
+CVI - Salta, asignando a la velocidad un componente en y. 
+**/
 q3movement.prototype.jump = function() {
     if(!this.onGround) { return false; }
     
@@ -146,6 +158,9 @@ q3movement.prototype.jump = function() {
     return true;
 };
 
+/**
+CVI - Mueve al jugador verificando si esta en el piso y utilizando los dos métodos siguientes. 
+**/
 q3movement.prototype.move = function(dir, frameTime) {
     q3movement_frameTime = frameTime*0.0075;
     
@@ -162,6 +177,9 @@ q3movement.prototype.move = function(dir, frameTime) {
     return this.position;
 };
 
+/**
+CVI - lo mueve si esta saltando, principalmente sin aplicar fricción
+**/
 q3movement.prototype.airMove = function(dir) {
     var speed = vec3.length(dir) * q3movement_scale;
     
@@ -170,6 +188,9 @@ q3movement.prototype.airMove = function(dir) {
     this.stepSlideMove( true );
 };
 
+/**
+CVI - lo mueve por el piso, aplicando ficción.
+**/
 q3movement.prototype.walkMove = function(dir) {
     this.applyFriction();
     
@@ -184,6 +205,9 @@ q3movement.prototype.walkMove = function(dir) {
     this.stepSlideMove( false );
 };
 
+/**
+CVI - Mover entre frame y frame verificando con los componentes fisicos del mapa (colliders de la pared o el piso)
+**/
 q3movement.prototype.slideMove = function(gravity) {
     var bumpcount;
     var numbumps = 4;

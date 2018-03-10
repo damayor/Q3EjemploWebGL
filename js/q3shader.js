@@ -27,11 +27,9 @@
 
 /**
 
-CVI - Crea el shader en lenguaje GLSL a partir del leido en Q3. 
+CVI - Carga los shaders a partir de recursos externos y los crea el shader en lenguaje GLSL
 
 **/
- 
- 
 //
 // Shader Tokenizer
 //
@@ -76,6 +74,8 @@ shaderTokenizer.prototype.prev = function() {
 //
 // Shader Loading
 //
+
+// CVI - Carga todos los shaders .shader localizados en una ubicación externa
 
 q3shader = {};
 
@@ -125,6 +125,8 @@ q3shader.parse = function(url, src, onload) {
     onload(shaders);
 };
 
+
+// PArse el shader en formato .shader
 q3shader.parseShader = function(name, tokens) {
     var brace = tokens.next();
     if(brace != '{') {
@@ -399,6 +401,8 @@ q3shader.parseWaveform = function(tokens) {
 //
 // WebGL Shader creation
 //
+
+// CVI - Crea el shader en lenguaje GLSL a partir del leido en Q3. 
 
 // This whole section is a bit ugly, but it gets the job done. The job, in this case, is translating
 // Quake 3 shaders into GLSL shader programs. We should probably be doing a bit more normalization here.
